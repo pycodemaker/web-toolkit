@@ -1,3 +1,4 @@
+from typing import Coroutine
 import requests
 import optparse
 import httpx
@@ -18,15 +19,15 @@ def get_args() -> optparse.Values:
         parser.error('[-] Please specify a destination url, use --help for more info.')
     return options
 
-async def request(url: str) -> int:
+async def request(url: str) -> Coroutine:
     """
     :return: status code of the requested url
     """
     try:
         async with httpx.AsyncClient() as client:
-            return await client.get(f'http://{url}')
+            return await client.get(url)
     except Exception:
-        pass
+        return None
 
 def export_csv(filename, items):
     with open(f'result/{filename}.txt', 'w') as f:
@@ -39,35 +40,32 @@ async def main():
     with open('subdomain.txt') as wordlist:
         for subdomain in wordlist:
             test_url = subdomain.strip() + '.' + options.url
-            resp = await request(test_url)
-            try:
-                if resp.status_code == 200:
-                    found = f'[+] Discovered subdomain --> {test_url}'
-                    print(found)
-                    subdomains.append(test_url)
-            except:
-                pass 
-    
+            resp = await request(f'http://{test_url}')
+            if resp != None and resp.status_code == 200:
+                found = f'[+] Discovered subdomain --> {test_url}'
+                print(found)
+                subdomains.append(test_url)
+
     if len(subdomains) != 0:
         print(f'{"-"*15} Phase 2 {"-"*15}')
-        with open('web-common.txt') as dirs:
-            for subdomain in subdomains:
+        for sub in subdomains:
+            with open('web-common.txt') as dirs:
+                print(f'[+] Crawling --> {sub}')
                 for dir in dirs:
-                    test_url = f'http://{subdomain}/{dir}'.strip()
+                    test_url = f'http://{sub}/{dir}'.strip()
                     if test_url[0] == '/':
                         test_url = test_url[1:]
                     resp = await request(test_url)
-                    try:
-                        if resp.status_code == 200:
-                            found = f'[+] Discovered path --> {test_url}'
-                            print(found)
-                            paths.append(test_url)
-                    except:
+                    if resp != None and resp.status_code == 200:
+                        found = f'[+] Discovered path --> {test_url}'
+                        print(found)
+                        paths.append(test_url)
+                    else:
                         pass
+                            
 
-    export_csv(f'{options.url}.paths', paths)
+    export_csv(f'{options.url.split("/")[0]}.paths', paths)
     export_csv(f'{options.url}.subdomains', subdomains)
 
-    
 if __name__ == '__main__':
     asyncio.run(main())
