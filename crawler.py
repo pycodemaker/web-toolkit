@@ -37,7 +37,7 @@ def export_csv(filename, items):
 async def main():
     options = get_args()
 
-    with open('subdomain.txt') as wordlist:
+    with open('wordlist/subdomain.txt') as wordlist:
         for subdomain in wordlist:
             test_url = subdomain.strip() + '.' + options.url
             resp = await request(f'http://{test_url}')
@@ -49,7 +49,7 @@ async def main():
     if len(subdomains) != 0:
         print(f'{"-"*15} Phase 2 {"-"*15}')
         for sub in subdomains:
-            with open('web-common.txt') as dirs:
+            with open('wordlist/web-common.txt') as dirs:
                 print(f'[+] Crawling --> {sub}')
                 for dir in dirs:
                     test_url = f'http://{sub}/{dir}'.strip()
