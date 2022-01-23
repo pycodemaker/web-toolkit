@@ -63,9 +63,10 @@ async def main():
                     else:
                         pass
                             
-
-    export_csv(f'{options.url.split("/")[0]}.paths', paths)
-    export_csv(f'{options.url}.subdomains', subdomains)
+    if len(paths) > 0:
+        export_csv(f'{options.url.split("/")[0]}.paths', paths)
+    if len(subdomains) > 0:
+        export_csv(f'{options.url}.subdomains', subdomains)
 
 if __name__ == '__main__':
     asyncio.run(main())
